@@ -1,0 +1,101 @@
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+  }
+  
+  .shimmer-modal {
+    position: relative;
+    overflow: hidden;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: none;
+    width: 100%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .shimmer-modal::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    padding: 2px;
+    background: linear-gradient(90deg, transparent, #10b981, #8b5cf6, #3b82f6, #10b981, transparent);
+    background-size: 300% 100%;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    animation: shimmer 4s linear infinite;
+    pointer-events: none;
+  }
+  
+  .modal-default { max-width: 550px; }
+  .modal-large { max-width: 800px; }
+  .modal-full { max-width: 95vw; }
+  
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.2);
+  }
+  
+  .modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .modal-close {
+    background: rgba(71, 85, 105, 0.2);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    color: #94a3b8;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .modal-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+  
+  .shimmer-modal-scroll {
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: rgba(15, 23, 42, 0.95);
+  }
+  
+  .shimmer-modal-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .shimmer-modal-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .shimmer-modal-scroll::-webkit-scrollbar-thumb {
+    background: rgba(71, 85, 105, 0.4);
+    border-radius: 3px;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 300% 0%; }
+  }

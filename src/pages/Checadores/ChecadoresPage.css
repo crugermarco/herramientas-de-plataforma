@@ -1,0 +1,219 @@
+.checadores-page {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .checadores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+  
+  .checador-card {
+    --status-color: #64748b;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    border: 2px solid var(--status-color);
+    border-radius: 20px;
+    padding: 1.5rem;
+    position: relative;
+    animation: neonPulse 3s infinite alternate;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .checador-card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .checador-card.status-online {
+    --status-color: #10b981;
+  }
+  
+  .checador-card.status-offline {
+    --status-color: #ef4444;
+  }
+  
+  .checador-card.status-checking {
+    --status-color: #f59e0b;
+    animation: pulse 1s infinite;
+  }
+  
+  .checador-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .status-icon {
+    filter: drop-shadow(0 0 8px var(--status-color));
+  }
+  
+  .status-icon.status-online { color: #10b981; }
+  .status-icon.status-offline { color: #ef4444; }
+  .status-icon.status-checking { 
+    color: #f59e0b;
+    animation: spin 2s linear infinite;
+  }
+  
+  .checador-info {
+    flex: 1;
+  }
+  
+  .checador-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 0.25rem;
+  }
+  
+  .checador-ip {
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    color: #3b82f6;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  
+  .checador-ubicacion,
+  .checador-modelo {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+  }
+  
+  .checador-status-text {
+    display: flex;
+    align-items: center;
+  }
+  
+  .status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .status-badge.status-online {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  
+  .status-badge.status-offline {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  
+  .status-badge.status-checking {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  
+  .checador-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+  
+  .btn-icon-sm {
+    background: rgba(71, 85, 105, 0.2);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    color: #94a3b8;
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-icon-sm:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+  }
+  
+  .btn-icon-sm.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+  
+  .checador-last-online {
+    font-size: 0.75rem;
+    color: #64748b;
+    border-top: 1px solid rgba(71, 85, 105, 0.2);
+    padding-top: 0.5rem;
+  }
+  
+  /* Empty State */
+  .empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .empty-icon {
+    color: #475569;
+  }
+  
+  .empty-state p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+  }
+  
+  /* Form */
+  .checador-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Animación de giro para el botón de escaneo */
+.spin-animation {
+    animation: spin 0.8s linear infinite;
+  }
+  
+  .btn-icon.scanning {
+    background: rgba(59, 130, 246, 0.3);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #3b82f6;
+    cursor: wait;
+  }
+  
+  .btn-icon:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Hacer la card clickeable */
+  .checador-card {
+    cursor: pointer;
+  }
+  
+  .checador-card:active {
+    transform: scale(0.98);
+  }
