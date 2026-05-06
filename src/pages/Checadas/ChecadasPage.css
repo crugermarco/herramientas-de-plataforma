@@ -1,0 +1,259 @@
+.checadas-page {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .filtros-panel {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    animation: slideInUp 0.3s ease;
+  }
+  
+  .filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  
+  .filtro-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  
+  .filtro-item label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .filtro-item input,
+  .filtro-item select {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(71, 85, 105, 0.4);
+    color: #e2e8f0;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  
+  .filtro-item input:focus,
+  .filtro-item select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+  }
+  
+  .filtros-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    justify-content: flex-end;
+  }
+  
+  .checadas-table-container {
+    overflow-x: auto;
+    animation: slideInUp 0.3s ease;
+  }
+  
+  .checadas-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  
+  .checadas-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  
+  .checadas-table th {
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 0.85rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+    white-space: nowrap;
+  }
+  
+  .checadas-table th svg {
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+  
+  .checadas-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.1);
+    color: #cbd5e1;
+  }
+  
+  .checadas-table tbody tr {
+    transition: background 0.2s ease;
+  }
+  
+  .checadas-table tbody tr:hover {
+    background: rgba(59, 130, 246, 0.05);
+  }
+  
+  .checadas-table tbody tr.tipo-entrada {
+    border-left: 3px solid #10b981;
+  }
+  
+  .checadas-table tbody tr.tipo-salida {
+    border-left: 3px solid #f59e0b;
+  }
+  
+  .checadas-table tbody tr.tipo-manual {
+    border-left: 3px solid #8b5cf6;
+  }
+  
+  .loading-cell,
+  .empty-cell {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .empleado-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  
+  .empleado-numero {
+    font-weight: 700;
+    color: #e2e8f0;
+    font-family: monospace;
+    font-size: 0.85rem;
+  }
+  
+  .empleado-nombre {
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+  
+  .checador-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  
+  .checador-ip {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-family: monospace;
+  }
+  
+  .tipo-badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  
+  .tipo-badge.tipo-entrada {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+  }
+  
+  .tipo-badge.tipo-salida {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+  }
+  
+  .tipo-badge.tipo-manual {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+  }
+  
+  .hora-cell {
+    font-family: monospace;
+    font-weight: 600;
+    color: #e2e8f0;
+  }
+  
+  .acciones-cell {
+    display: flex;
+    gap: 0.35rem;
+  }
+  
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding: 0.75rem;
+  }
+  
+  .btn-page {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    color: #94a3b8;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-page:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+  }
+  
+  .btn-page:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  
+  .page-info {
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+  
+  .checada-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+  }
+  
+  .text-blue { color: #3b82f6; }
+  
+  @keyframes slideInUp {
+    from {
+      transform: translateY(15px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  .spin-animation {
+    animation: spin 0.8s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }

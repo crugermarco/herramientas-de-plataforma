@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Barcode, MonitorCheck, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Barcode, MonitorCheck, ClipboardCheck, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { MODULES } from '../../lib/constants'
 import { useAuth } from '../../context/AuthContext'
@@ -8,6 +8,7 @@ import './Sidebar.css'
 const iconMap = {
   Barcode,
   MonitorCheck,
+  ClipboardCheck,
   Settings
 }
 
@@ -42,9 +43,6 @@ export default function Sidebar() {
             >
               <Icon size={22} className="sidebar-icon" />
               {!collapsed && <span>{module.name}</span>}
-              {!collapsed && module.badge && (
-                <span className="sidebar-badge">{module.badge}</span>
-              )}
             </NavLink>
           )
         })}
@@ -64,7 +62,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Decoración neon border */}
       <div className="sidebar-neon-border" />
     </aside>
   )

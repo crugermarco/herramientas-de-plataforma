@@ -17,5 +17,12 @@ export const MODULES = [
     icon: 'MonitorCheck',
     path: '/checadores',
     description: 'Monitoreo de checadores en red'
+  },
+  {
+    id: 'checadas',
+    name: 'Checadas',
+    icon: 'ClipboardCheck',
+    path: '/checadas',
+    description: 'Registro y consulta de checadas'
   }
 ]
