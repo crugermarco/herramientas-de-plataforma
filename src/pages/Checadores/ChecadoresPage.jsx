@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import Modal from '../../components/UI/Modal'
-import { MonitorCheck, Plus, Wifi, WifiOff, RefreshCw, Edit, Trash2, Zap } from 'lucide-react'
+import { MonitorCheck, Plus, Wifi, WifiOff, RefreshCw, Edit, Trash2, Zap, Activity, Clock, AlertTriangle, CheckCircle2, XCircle, BarChart3 } from 'lucide-react'
 import './ChecadoresPage.css'
 
-const PING_TIMEOUT = 1500
+const PING_TIMEOUT = 3000
+const PING_TIMEOUT_LONG = 5000
 const BATCH_SIZE = 5
 
 export default function ChecadoresPage() {
@@ -16,13 +17,25 @@ export default function ChecadoresPage() {
   const [checkingIPs, setCheckingIPs] = useState({})
   const [toasts, setToasts] = useState([])
   const [isScanning, setIsScanning] = useState(false)
+  const [historial, setHistorial] = useState({})
+  const [diagnosticoExpandido, setDiagnosticoExpandido] = useState(null)
+  
   const scanAbortRef = useRef(null)
+  const checadoresRef = useRef([])
+  const isScanningRef = useRef(false)
+  const intervalRef = useRef(null)
+
+  useEffect(() => {
+    checadoresRef.current = checadores
+  }, [checadores])
 
   useEffect(() => {
     loadChecadores()
-    const interval = setInterval(checkAllIPs, 30000)
     return () => {
-      clearInterval(interval)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
       if (scanAbortRef.current) {
         scanAbortRef.current.aborted = true
       }
@@ -32,8 +45,20 @@ export default function ChecadoresPage() {
   useEffect(() => {
     if (checadores.length > 0) {
       checkAllIPs()
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+      intervalRef.current = setInterval(() => {
+        checkAllIPs()
+      }, 30000)
     }
-  }, [checadores.length])
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [checadores])
 
   function addToast(message, type = 'info') {
     const id = Date.now()
@@ -49,7 +74,6 @@ export default function ChecadoresPage() {
         .from('checadores')
         .select('*')
         .order('created_at', { ascending: false })
-
       if (error) throw error
       setChecadores(data || [])
     } catch (error) {
@@ -58,84 +82,110 @@ export default function ChecadoresPage() {
     }
   }
 
-  // Ping ultra rápido
   async function pingIP(ip) {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), PING_TIMEOUT)
-
+    const inicio = performance.now()
+    
     try {
-      await fetch(`http://${ip}`, {
-        method: 'HEAD',
-        mode: 'no-cors',
-        signal: controller.signal,
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), PING_TIMEOUT)
+      await fetch(`http://${ip}`, { 
+        method: 'HEAD', 
+        mode: 'no-cors', 
+        signal: ctrl.signal,
         cache: 'no-cache'
       })
-      clearTimeout(timeout)
-      return 'online'
-    } catch {
-      clearTimeout(timeout)
-      
-      try {
-        await new Promise((resolve, reject) => {
-          const img = new Image()
-          const imgTimeout = setTimeout(() => {
-            img.src = ''
-            reject(new Error('timeout'))
-          }, 800)
-          
-          img.onload = () => {
-            clearTimeout(imgTimeout)
-            resolve()
+      clearTimeout(t)
+      const tiempo = (performance.now() - inicio).toFixed(0)
+      return { status: 'online', metodo: 'Respuesta HTTP', detalle: 'Servidor web activo', tiempo, calidad: 'excelente' }
+    } catch(e) {
+      if (e.name === 'TypeError' && e.message === 'Failed to fetch') {
+        const tiempo = (performance.now() - inicio).toFixed(0)
+        return { status: 'online', metodo: 'Dispositivo detectado', detalle: 'Responde sin servidor web', tiempo, calidad: 'buena' }
+      }
+      if (e.name === 'AbortError') {
+        const tiempo = PING_TIMEOUT
+        try {
+          const ctrl = new AbortController()
+          const t = setTimeout(() => ctrl.abort(), PING_TIMEOUT_LONG)
+          await fetch(`http://${ip}`, { 
+            method: 'HEAD', 
+            mode: 'no-cors', 
+            signal: ctrl.signal,
+            cache: 'no-cache'
+          })
+          clearTimeout(t)
+          const tiempoTotal = (performance.now() - inicio).toFixed(0)
+          return { status: 'online', metodo: 'Respuesta tardía', detalle: 'Respondió tras reintento', tiempo: tiempoTotal, calidad: 'lenta' }
+        } catch(e2) {
+          if (e2.name === 'TypeError') {
+            const tiempoTotal = (performance.now() - inicio).toFixed(0)
+            return { status: 'online', metodo: 'Dispositivo saturado', detalle: 'Tardó pero respondió', tiempo: tiempoTotal, calidad: 'intermitente' }
           }
-          img.onerror = () => {
-            clearTimeout(imgTimeout)
-            reject(new Error('error'))
-          }
-          img.src = `http://${ip}/favicon.ico?t=${Date.now()}`
-        })
-        return 'online'
-      } catch {
-        return 'offline'
+          const tiempoTotal = (performance.now() - inicio).toFixed(0)
+          return { status: 'offline', metodo: 'Sin conexión', detalle: 'No responde a ningún intento', tiempo: tiempoTotal, calidad: 'critica' }
+        }
       }
     }
+    
+    return { status: 'offline', metodo: 'Error desconocido', detalle: 'Fallo total de comunicación', tiempo: 'N/A', calidad: 'critica' }
   }
 
-  // Escaneo por lotes
   const checkAllIPs = useCallback(async () => {
-    if (isScanning) return
+    if (isScanningRef.current) return
     
+    isScanningRef.current = true
     setIsScanning(true)
+    
     const abortController = { aborted: false }
     scanAbortRef.current = abortController
-
-    const startTime = performance.now()
+    const currentChecadores = checadoresRef.current
     
-    const initialStatus = {}
-    checadores.forEach(c => { initialStatus[c.id] = 'checking' })
-    setCheckingIPs(initialStatus)
+    if (currentChecadores.length === 0) {
+      isScanningRef.current = false
+      setIsScanning(false)
+      return
+    }
 
-    for (let i = 0; i < checadores.length; i += BATCH_SIZE) {
+    setCheckingIPs(prev => {
+      const updated = { ...prev }
+      currentChecadores.forEach(c => { updated[c.id] = 'checking' })
+      return updated
+    })
+
+    const allResults = {}
+    const nuevosRegistros = {}
+    
+    for (let i = 0; i < currentChecadores.length; i += BATCH_SIZE) {
       if (abortController.aborted) break
-      
-      const batch = checadores.slice(i, i + BATCH_SIZE)
+      const batch = currentChecadores.slice(i, i + BATCH_SIZE)
       
       const batchResults = await Promise.all(
         batch.map(async (checador) => {
-          const status = await pingIP(checador.ip_address)
-          return { id: checador.id, status, checador }
+          const result = await pingIP(checador.ip_address)
+          allResults[checador.id] = result.status
+          return { id: checador.id, ...result, checador }
         })
       )
 
       setCheckingIPs(prev => {
         const updated = { ...prev }
-        batchResults.forEach(({ id, status }) => {
-          updated[id] = status
-        })
+        batchResults.forEach(({ id, status }) => { updated[id] = status })
         return updated
       })
 
-      batchResults.forEach(({ id, status, checador }) => {
+      batchResults.forEach(({ id, status, metodo, detalle, tiempo, calidad, checador }) => {
         const now = new Date().toISOString()
+        const registro = {
+          timestamp: now,
+          status,
+          metodo,
+          detalle,
+          tiempo,
+          calidad
+        }
+        
+        nuevosRegistros[checador.nombre] = registro
+        
         supabase
           .from('checadores')
           .update({
@@ -151,40 +201,101 @@ export default function ChecadoresPage() {
       })
     }
 
-    const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
-    
+    setHistorial(prev => {
+      const updated = { ...prev }
+      Object.entries(nuevosRegistros).forEach(([nombre, registro]) => {
+        if (!updated[nombre]) updated[nombre] = []
+        updated[nombre] = [registro, ...(updated[nombre] || [])].slice(0, 20)
+      })
+      return updated
+    })
+
     if (!abortController.aborted) {
-      const onlineCount = Object.values(checkingIPs).filter(s => s === 'online').length
-      addToast(`✅ Escaneo en ${elapsed}s - ${onlineCount}/${checadores.length} en línea`, 'success')
+      const onlineCount = Object.values(allResults).filter(s => s === 'online').length
+      const offlineList = currentChecadores.filter(c => allResults[c.id] === 'offline').map(c => c.nombre)
+      
+      if (offlineList.length > 0) {
+        addToast(`⚠️ ${offlineList.join(', ')} no responde(n)`, 'warning')
+      } else {
+        addToast(`✅ ${onlineCount}/${currentChecadores.length} en línea`, 'success')
+      }
     }
     
+    isScanningRef.current = false
     setIsScanning(false)
-  }, [checadores, isScanning])
+  }, [])
 
   async function checkSingleIP(checador) {
     setCheckingIPs(prev => ({ ...prev, [checador.id]: 'checking' }))
-    
-    const status = await pingIP(checador.ip_address)
-    
-    setCheckingIPs(prev => ({ ...prev, [checador.id]: status }))
+    const result = await pingIP(checador.ip_address)
+    setCheckingIPs(prev => ({ ...prev, [checador.id]: result.status }))
     
     const now = new Date().toISOString()
+    const registro = {
+      timestamp: now,
+      status: result.status,
+      metodo: result.metodo,
+      detalle: result.detalle,
+      tiempo: result.tiempo,
+      calidad: result.calidad
+    }
+
+    setHistorial(prev => {
+      const updated = { ...prev }
+      if (!updated[checador.nombre]) updated[checador.nombre] = []
+      updated[checador.nombre] = [registro, ...(updated[checador.nombre] || [])].slice(0, 20)
+      return updated
+    })
+
     await supabase
       .from('checadores')
       .update({
-        status,
+        status: result.status,
         last_check: now,
-        ...(status === 'online' ? { last_online: now } : {}),
+        ...(result.status === 'online' ? { last_online: now } : {}),
         updated_at: now
       })
       .eq('id', checador.id)
 
     addToast(
-      status === 'online' 
-        ? `✅ ${checador.nombre} en línea` 
-        : `❌ ${checador.nombre} no responde`,
-      status === 'online' ? 'success' : 'error'
+      result.status === 'online' 
+        ? `✅ ${checador.nombre}: ${result.metodo} (${result.tiempo}ms)` 
+        : `❌ ${checador.nombre}: ${result.metodo}`,
+      result.status === 'online' ? 'success' : 'error'
     )
+  }
+
+  function getIconoCalidad(calidad) {
+    switch (calidad) {
+      case 'excelente': return <CheckCircle2 size={14} color="#10b981" />
+      case 'buena': return <CheckCircle2 size={14} color="#3b82f6" />
+      case 'lenta': return <Clock size={14} color="#f59e0b" />
+      case 'intermitente': return <AlertTriangle size={14} color="#f59e0b" />
+      case 'critica': return <XCircle size={14} color="#ef4444" />
+      default: return <Activity size={14} color="#64748b" />
+    }
+  }
+
+  function getEtiquetaCalidad(calidad) {
+    switch (calidad) {
+      case 'excelente': return 'Excelente'
+      case 'buena': return 'Buena'
+      case 'lenta': return 'Lenta'
+      case 'intermitente': return 'Intermitente'
+      case 'critica': return 'Crítica'
+      default: return 'Desconocida'
+    }
+  }
+
+  function getColorCalidad(calidad) {
+    switch (calidad) {
+      case 'excelente': return '#10b981'
+      case 'buena': return '#3b82f6'
+      case 'lenta': return '#f59e0b'
+      case 'intermitente': return '#f97316'
+      case 'critica': return '#ef4444'
+      default: return '#64748b'
+    }
   }
 
   async function handleAdd(e) {
@@ -193,9 +304,7 @@ export default function ChecadoresPage() {
       const { error } = await supabase
         .from('checadores')
         .insert([{ ...formData, status: 'offline' }])
-
       if (error) throw error
-      
       addToast('✅ Checador agregado', 'success')
       setIsAddModalOpen(false)
       setFormData({ nombre: '', ip_address: '', ubicacion: '', modelo: '' })
@@ -213,9 +322,7 @@ export default function ChecadoresPage() {
         .from('checadores')
         .update(formData)
         .eq('id', editingChecador.id)
-
       if (error) throw error
-      
       addToast('✅ Checador actualizado', 'success')
       setIsEditModalOpen(false)
       setEditingChecador(null)
@@ -272,7 +379,7 @@ export default function ChecadoresPage() {
             <MonitorCheck size={28} className="title-icon" />
             Checadores
           </h1>
-          <p className="page-subtitle">Monitoreo rápido de checadores en red</p>
+          <p className="page-subtitle">Monitoreo y diagnóstico de checadores en red</p>
         </div>
         <div className="page-actions">
           <button className="btn-primary" onClick={() => {
@@ -297,6 +404,9 @@ export default function ChecadoresPage() {
         {checadores.map(checador => {
           const status = getStatusDisplay(checador.id)
           const StatusIcon = status.icon
+          const datosHistorial = historial[checador.nombre] || []
+          const ultimoRegistro = datosHistorial[0]
+          const expandido = diagnosticoExpandido === checador.id
           
           return (
             <div 
@@ -325,26 +435,109 @@ export default function ChecadoresPage() {
                 </span>
               </div>
 
+              {ultimoRegistro && (
+                <div className="checador-diagnostico-resumen">
+                  <div className="diag-row">
+                    <Activity size={12} />
+                    <span>{ultimoRegistro.metodo}</span>
+                  </div>
+                  <div className="diag-row">
+                    <Clock size={12} />
+                    <span>{ultimoRegistro.tiempo}ms</span>
+                  </div>
+                  <div className="diag-row">
+                    {getIconoCalidad(ultimoRegistro.calidad)}
+                    <span style={{ color: getColorCalidad(ultimoRegistro.calidad) }}>
+                      {getEtiquetaCalidad(ultimoRegistro.calidad)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <button 
+                className="btn-diagnostico-expand"
+                onClick={() => setDiagnosticoExpandido(expandido ? null : checador.id)}
+              >
+                <BarChart3 size={14} />
+                {expandido ? 'Ocultar diagnóstico' : 'Ver diagnóstico'}
+              </button>
+
+              {expandido && (
+                <div className="checador-diagnostico-completo">
+                  <h4 className="diag-title">Diagnóstico de conexión</h4>
+                  
+                  {ultimoRegistro ? (
+                    <>
+                      <div className="diag-seccion">
+                        <span className="diag-label">Última verificación</span>
+                        <div className="diag-detalle">
+                          <div className="diag-linea">
+                            <span>Método:</span>
+                            <strong>{ultimoRegistro.metodo}</strong>
+                          </div>
+                          <div className="diag-linea">
+                            <span>Detalle:</span>
+                            <strong>{ultimoRegistro.detalle}</strong>
+                          </div>
+                          <div className="diag-linea">
+                            <span>Tiempo de respuesta:</span>
+                            <strong>{ultimoRegistro.tiempo}ms</strong>
+                          </div>
+                          <div className="diag-linea">
+                            <span>Calidad de conexión:</span>
+                            <strong style={{ color: getColorCalidad(ultimoRegistro.calidad) }}>
+                              {getIconoCalidad(ultimoRegistro.calidad)}
+                              {' '}{getEtiquetaCalidad(ultimoRegistro.calidad)}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="diag-seccion">
+                        <span className="diag-label">Interpretación</span>
+                        <p className="diag-interpretacion">
+                          {ultimoRegistro.calidad === 'excelente' && '✅ Este checador responde inmediatamente. Las checadas se registran sin problemas.'}
+                          {ultimoRegistro.calidad === 'buena' && '✅ El dispositivo está en línea y responde correctamente. No debería haber pérdida de checadas.'}
+                          {ultimoRegistro.calidad === 'lenta' && '⚠️ Este checador tarda en responder. Puede haber retrasos en el registro de checadas.'}
+                          {ultimoRegistro.calidad === 'intermitente' && '⚠️ Este checador presenta saturación o micro-cortes. Es posible que algunas checadas se pierdan.'}
+                          {ultimoRegistro.calidad === 'critica' && '🔴 Este checador no responde. Las checadas NO se están registrando. Requiere revisión urgente.'}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="diag-sin-datos">Sin datos de diagnóstico todavía. Haz clic en ⚡ para verificar.</p>
+                  )}
+
+                  {datosHistorial.length > 1 && (
+                    <div className="diag-seccion">
+                      <span className="diag-label">Historial reciente ({datosHistorial.length} verificaciones)</span>
+                      <div className="diag-historial">
+                        {datosHistorial.slice(0, 5).map((reg, i) => (
+                          <div key={i} className="diag-historial-item">
+                            <span className="diag-historial-hora">
+                              {new Date(reg.timestamp).toLocaleTimeString()}
+                            </span>
+                            {getIconoCalidad(reg.calidad)}
+                            <span style={{ color: getColorCalidad(reg.calidad), fontSize: '0.75rem' }}>
+                              {getEtiquetaCalidad(reg.calidad)}
+                            </span>
+                            <span className="diag-historial-tiempo">{reg.tiempo}ms</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="checador-actions">
-                <button 
-                  className="btn-icon-sm" 
-                  onClick={() => checkSingleIP(checador)}
-                  title="Verificar ahora"
-                >
+                <button className="btn-icon-sm" onClick={() => checkSingleIP(checador)} title="Verificar ahora">
                   <Zap size={14} />
                 </button>
-                <button 
-                  className="btn-icon-sm" 
-                  onClick={() => openEditModal(checador)}
-                  title="Editar"
-                >
+                <button className="btn-icon-sm" onClick={() => openEditModal(checador)} title="Editar">
                   <Edit size={14} />
                 </button>
-                <button 
-                  className="btn-icon-sm btn-danger" 
-                  onClick={() => handleDelete(checador.id)}
-                  title="Eliminar"
-                >
+                <button className="btn-icon-sm btn-danger" onClick={() => handleDelete(checador.id)} title="Eliminar">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -374,55 +567,23 @@ export default function ChecadoresPage() {
         <form onSubmit={handleAdd} className="checador-form">
           <div className="form-group">
             <label className="form-label">Nombre del Checador *</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.nombre}
-              onChange={e => setFormData(prev => ({ ...prev, nombre: e.target.value }))}
-              placeholder="Checador Principal"
-              required
-            />
+            <input type="text" className="form-input" value={formData.nombre} onChange={e => setFormData(prev => ({ ...prev, nombre: e.target.value }))} placeholder="Checador Principal" required />
           </div>
           <div className="form-group">
             <label className="form-label">Dirección IP *</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.ip_address}
-              onChange={e => setFormData(prev => ({ ...prev, ip_address: e.target.value }))}
-              placeholder="192.168.1.100"
-              pattern="^(\d{1,3}\.){3}\d{1,3}$"
-              required
-            />
+            <input type="text" className="form-input" value={formData.ip_address} onChange={e => setFormData(prev => ({ ...prev, ip_address: e.target.value }))} placeholder="192.168.1.100" pattern="^(\d{1,3}\.){3}\d{1,3}$" required />
           </div>
           <div className="form-group">
             <label className="form-label">Ubicación</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.ubicacion}
-              onChange={e => setFormData(prev => ({ ...prev, ubicacion: e.target.value }))}
-              placeholder="Entrada Principal"
-            />
+            <input type="text" className="form-input" value={formData.ubicacion} onChange={e => setFormData(prev => ({ ...prev, ubicacion: e.target.value }))} placeholder="Entrada Principal" />
           </div>
           <div className="form-group">
             <label className="form-label">Modelo</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.modelo}
-              onChange={e => setFormData(prev => ({ ...prev, modelo: e.target.value }))}
-              placeholder="ZK TF1700"
-            />
+            <input type="text" className="form-input" value={formData.modelo} onChange={e => setFormData(prev => ({ ...prev, modelo: e.target.value }))} placeholder="ZK TF1700" />
           </div>
           <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={() => setIsAddModalOpen(false)}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-primary">
-              <Plus size={18} />
-              Agregar
-            </button>
+            <button type="button" className="btn-secondary" onClick={() => setIsAddModalOpen(false)}>Cancelar</button>
+            <button type="submit" className="btn-primary"><Plus size={18} />Agregar</button>
           </div>
         </form>
       </Modal>
@@ -431,59 +592,30 @@ export default function ChecadoresPage() {
         <form onSubmit={handleEdit} className="checador-form">
           <div className="form-group">
             <label className="form-label">Nombre del Checador *</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.nombre}
-              onChange={e => setFormData(prev => ({ ...prev, nombre: e.target.value }))}
-              required
-            />
+            <input type="text" className="form-input" value={formData.nombre} onChange={e => setFormData(prev => ({ ...prev, nombre: e.target.value }))} required />
           </div>
           <div className="form-group">
             <label className="form-label">Dirección IP *</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.ip_address}
-              onChange={e => setFormData(prev => ({ ...prev, ip_address: e.target.value }))}
-              pattern="^(\d{1,3}\.){3}\d{1,3}$"
-              required
-            />
+            <input type="text" className="form-input" value={formData.ip_address} onChange={e => setFormData(prev => ({ ...prev, ip_address: e.target.value }))} pattern="^(\d{1,3}\.){3}\d{1,3}$" required />
           </div>
           <div className="form-group">
             <label className="form-label">Ubicación</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.ubicacion}
-              onChange={e => setFormData(prev => ({ ...prev, ubicacion: e.target.value }))}
-            />
+            <input type="text" className="form-input" value={formData.ubicacion} onChange={e => setFormData(prev => ({ ...prev, ubicacion: e.target.value }))} />
           </div>
           <div className="form-group">
             <label className="form-label">Modelo</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.modelo}
-              onChange={e => setFormData(prev => ({ ...prev, modelo: e.target.value }))}
-            />
+            <input type="text" className="form-input" value={formData.modelo} onChange={e => setFormData(prev => ({ ...prev, modelo: e.target.value }))} />
           </div>
           <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-primary">
-              Guardar
-            </button>
+            <button type="button" className="btn-secondary" onClick={() => setIsEditModalOpen(false)}>Cancelar</button>
+            <button type="submit" className="btn-primary">Guardar</button>
           </div>
         </form>
       </Modal>
 
       <div className="toast-container">
         {toasts.map(toast => (
-          <div key={toast.id} className={`toast ${toast.type}`}>
-            {toast.message}
-          </div>
+          <div key={toast.id} className={`toast ${toast.type}`}>{toast.message}</div>
         ))}
       </div>
     </div>

@@ -217,3 +217,188 @@
   .checador-card:active {
     transform: scale(0.98);
   }
+
+  .alertas-panel {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .alertas-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  
+  .alertas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  
+  .alerta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .alerta-nombre {
+    flex: 1;
+    color: #e2e8f0;
+  }
+  
+  .alerta-count {
+    color: #ef4444;
+    font-weight: 600;
+  }
+  
+  .text-amber { color: #f59e0b; }
+  .text-red { color: #ef4444; }
+
+  .checador-diagnostico-resumen {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.6rem 0.75rem;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 10px;
+    font-size: 0.75rem;
+  }
+  
+  .diag-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #94a3b8;
+  }
+  
+  .btn-diagnostico-expand {
+    width: 100%;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-diagnostico-expand:hover {
+    background: rgba(59, 130, 246, 0.2);
+  }
+  
+  .checador-diagnostico-completo {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(71, 85, 105, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    animation: slideInUp 0.3s ease;
+  }
+  
+  .diag-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 0.75rem;
+  }
+  
+  .diag-seccion {
+    margin-bottom: 0.75rem;
+  }
+  
+  .diag-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  
+  .diag-detalle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  .diag-linea {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+  
+  .diag-linea strong {
+    color: #e2e8f0;
+    font-weight: 600;
+  }
+  
+  .diag-interpretacion {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+    padding: 0.5rem 0.75rem;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 8px;
+    border-left: 3px solid #3b82f6;
+  }
+  
+  .diag-sin-datos {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-align: center;
+    padding: 0.5rem;
+  }
+  
+  .diag-historial {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .diag-historial-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
+    background: rgba(30, 41, 59, 0.4);
+    border-radius: 6px;
+  }
+  
+  .diag-historial-hora {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-family: monospace;
+    min-width: 65px;
+  }
+  
+  .diag-historial-tiempo {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-left: auto;
+    font-family: monospace;
+  }
+  
+  .checador-card {
+    cursor: default;
+  }
+  
+  @keyframes slideInUp {
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
