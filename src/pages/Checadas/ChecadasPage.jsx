@@ -91,7 +91,7 @@ export default function ChecadasPage() {
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `ATT_${checador.nombre.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.dat`
+      link.download = `ATT_${checador.nombre.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0].replace(/-/g, '')}.DAT`
       link.click()
       URL.revokeObjectURL(url)
 
